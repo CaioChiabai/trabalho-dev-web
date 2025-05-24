@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arquitetura Cliente-Servidor</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .mermaid {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1),
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Arquitetura do Sistema de Cardápios</h1>
+        <div style="display: flex; justify-content: center; align-items: center", class="mermaid">
+            flowchart TD
+                %% Definição de estilos
+                classDef frontend fill:#e8f5e9,stroke:#4CAF50,stroke-width:2px
+                classDef backend fill:#e3f2fd,stroke:#2196F3,stroke-width:2px
+                classDef database fill:#fff3e0,stroke:#FF9800,stroke-width:2px
+
+                %% Nós da arquitetura
+                subgraph Frontend["Frontend (React)"]
+                    A[HTML/CSS/JS]
+                    B[Componentes React]
+                    C[Context API]
+                    D[Axios/fetch]
+                end
+
+                subgraph Backend["Backend (.NET)"]
+                    E[Controllers]
+                    F["Services (Business Logic)"]
+                    G[JWT Authentication]
+                    H[Role Authorization]
+                end
+
+                subgraph Database["Banco de Dados"]
+                    I[(
+                    • Usuarios
+                    • Cardapios
+                    • Categorias
+                    • Itens
+                    • Variacoes do item
+                    )]
+                end
+
+                %% Conexões
+                Frontend -->|HTTP Requests| Backend
+                E --> F
+                Backend --> Database
+
+                %% Aplicação de estilos
+                class Frontend frontend
+                class Backend backend
+                class Database database
+
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+</html>
