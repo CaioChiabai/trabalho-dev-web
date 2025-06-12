@@ -23,11 +23,13 @@ namespace APICardapio.Models
 
         [Required]
         [MinLength(6)]
-        [Column("senha")]
-        public string Senha { get; set; } = string.Empty;
+        [Column("senha_hash")]
+        public string SenhaHash { get; set; } = string.Empty;
 
         [Column("data_criacao")]
-        public DateTime DataCriacao { get; set; } = DateTime.UtcNow;        [Column("ativo")]
+        public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
+
+        [Column("ativo")]
         public bool Ativo { get; set; } = true;
 
         [MaxLength(20)]
