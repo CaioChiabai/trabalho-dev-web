@@ -8,6 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 DotNetEnv.Env.Load();
 
+builder.Services.AddScoped<JwtService>();
+
 // Configuração para PostgreSQL
 builder.Services.AddDbContext<ApplicationDbContext>(
     options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
