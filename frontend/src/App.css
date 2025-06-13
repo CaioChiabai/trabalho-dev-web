@@ -1,0 +1,60 @@
+/* Painel Administrativo - estilos básicos */
+.painel-admin-container {
+  max-width: 900px;
+  margin: 40px auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+  padding: 32px 24px;
+}
+.abas-admin {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.aba {
+  background: #f3f3f3;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  font-weight: 500;
+  color: #333;
+  transition: background 0.2s;
+}
+.aba.ativa {
+  background: #1976d2;
+  color: #fff;
+}
+.conteudo-admin {
+  border: 1px solid #e0e0e0;
+  border-radius: 0 0 8px 8px;
+  padding: 24px;
+  min-height: 200px;
+}
+.btn-adicionar {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 6px;
+  margin-bottom: 18px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.2s;
+}
+.btn-adicionar:hover {
+  background: #125ea2;
+}
+.lista-admin {
+  margin-top: 18px;
+  color: #888;
+}
+@media (max-width: 600px) {
+  .painel-admin-container {
+    padding: 12px 4px;
+  }
+  .conteudo-admin {
+    padding: 10px;
+  }
+}
