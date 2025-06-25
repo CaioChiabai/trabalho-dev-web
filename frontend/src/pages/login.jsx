@@ -12,6 +12,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [capsLockOn, setCapsLockOn] = useState(false);
   const [showValidationErrors, setShowValidationErrors] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
@@ -35,7 +36,7 @@ export default function Login() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setShowValidationErrors(true);
     const newErrors = {};
@@ -50,7 +51,30 @@ export default function Login() {
 
     setErrors({});
     setShowValidationErrors(false);
-    alert(`Nome: ${formData.nome}\nSenha: ${formData.senha}`);
+    setLoading(true);
+
+    try {
+      const response = await fetch("http://localhost:5000/api/usuarios/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (data.token) {
+        // Aqui você pode salvar o token no localStorage e redirecionar o usuário
+        // localStorage.setItem("token", data.token);
+        // window.location.href = "/"; // redireciona para a home
+        alert("Login realizado!"); // Remova este alert se quiser
+      } else {
+        setErrors({ geral: "Nome ou senha inválidos." });
+      }
+    } catch (error) {
+      setErrors({ geral: "Erro ao conectar com o servidor." });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -67,13 +91,16 @@ export default function Login() {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit} autoComplete="off">
+            {errors.geral && (
+              <div className="text-red-500 text-center text-sm mb-2">{errors.geral}</div>
+            )}
             <div>
-              <label htmlFor="nome" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="nome-login" className="block text-sm font-medium text-gray-700">
                 Nome
               </label>
               <div className="mt-1">
                 <input
-                  id="nome"
+                  id="nome-login"
                   name="nome"
                   type="text"
                   value={formData.nome}
@@ -89,13 +116,13 @@ export default function Login() {
             </div>
 
             <div>
-              <label htmlFor="senha" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="senha-login" className="block text-sm font-medium text-gray-700">
                 Senha
               </label>
               <div className="mt-1">
                 <div className="relative">
                   <input
-                    id="senha"
+                    id="senha-login"
                     name="senha"
                     type={showPassword ? "text" : "password"}
                     value={formData.senha}
@@ -133,8 +160,9 @@ export default function Login() {
               <button
                 type="submit"
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                disabled={loading}
               >
-                Entrar
+                {loading ? "Entrando..." : "Entrar"}
               </button>
             </div>
           </form>
