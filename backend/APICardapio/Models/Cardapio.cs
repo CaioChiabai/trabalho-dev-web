@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Newtonsoft.Json;
 
 namespace APICardapio.Models
 {
@@ -32,7 +33,9 @@ namespace APICardapio.Models
         [Column("data_atualizacao")]
         public DateTime DataAtualizacao { get; set; } = DateTime.UtcNow;        // Relacionamentos
         [ForeignKey("UsuarioId")]
-        public virtual Usuario Usuario { get; set; } = null!;
+        [System.Text.Json.Serialization.JsonIgnore]
+        [JsonIgnore]
+        public virtual Usuario? Usuario { get; set; } // Removido Required, agora nullable
 
         public virtual ICollection<Categoria> Categorias { get; set; } = new List<Categoria>();
     }

@@ -70,7 +70,7 @@ namespace APICardapio.Controllers
             {
                 return StatusCode(500, new { message = "Erro interno do servidor", details = ex.Message });
             }
-        }        
+        }
 
 
         [HttpPost]
@@ -85,7 +85,8 @@ namespace APICardapio.Controllers
         [ProducesResponseType(typeof(UsuarioResponseDto), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<UsuarioResponseDto>> Create([FromBody] UsuarioCreateDto usuarioDto)
+        [Consumes("multipart/form-data", "application/json")]
+        public async Task<ActionResult<UsuarioResponseDto>> Create([FromForm] UsuarioCreateDto usuarioDto)
         {
             try
             {
@@ -105,13 +106,57 @@ namespace APICardapio.Controllers
             {
                 return StatusCode(500, new { message = "Erro interno do servidor", details = ex.Message });
             }
-        }        
+        }
+
+
+        [HttpPost("json")]
+        [SwaggerOperation(
+            Summary = "Criar novo usuário/restaurante (apenas JSON)",
+            Description = "Cria um novo usuário/restaurante no sistema usando apenas dados JSON (sem arquivos)",
+            OperationId = "CreateUsuarioJson"
+        )]
+        [SwaggerResponse(201, "Usuário criado com sucesso", typeof(UsuarioResponseDto))]
+        [SwaggerResponse(400, "Dados inválidos ou email já existe", typeof(object))]
+        [SwaggerResponse(500, "Erro interno do servidor", typeof(object))]
+        [ProducesResponseType(typeof(UsuarioResponseDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<UsuarioResponseDto>> CreateJson([FromBody] UsuarioCreateJsonDto usuarioDto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var createDto = new UsuarioCreateDto
+                {
+                    Nome = usuarioDto.Nome,
+                    Email = usuarioDto.Email,
+                    Cnpj = usuarioDto.Cnpj,
+                    Telefone = usuarioDto.Telefone,
+                    Senha = usuarioDto.Senha
+                };
+
+                var usuario = await _usuarioService.CreateAsync(createDto);
+                return CreatedAtAction(nameof(GetById), new { id = usuario.Id }, usuario);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro interno do servidor", details = ex.Message });
+            }
+        }
 
 
         [HttpPut("{id}")]
         [SwaggerOperation(
-            Summary = "Atualizar usuário",
-            Description = "Atualiza os dados de um usuário existente com validação de dados e regras de negócio",
+            Summary = "Atualizar usuário/restaurante",
+            Description = "Atualiza os dados de um usuário/restaurante existente com validação de dados e regras de negócio. Aceita dados em multipart/form-data para upload de arquivos.",
             OperationId = "UpdateUsuario"
         )]
         [SwaggerResponse(200, "Usuário atualizado com sucesso", typeof(UsuarioResponseDto))]
@@ -122,7 +167,8 @@ namespace APICardapio.Controllers
         [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<UsuarioResponseDto>> Update(int id, [FromBody] UsuarioUpdateDto usuarioDto)
+        [Consumes("multipart/form-data", "application/json")]
+        public async Task<ActionResult<UsuarioResponseDto>> Update(int id, [FromForm] UsuarioUpdateDto usuarioDto)
         {
             try
             {
