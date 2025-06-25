@@ -30,13 +30,15 @@ namespace APICardapio.Models
         public DateTime DataCriacao { get; set; } = DateTime.UtcNow;        [Column("ativo")]
         public bool Ativo { get; set; } = true;
 
+        [Required]
         [MaxLength(20)]
         [Column("cnpj")]
-        public string? Cnpj { get; set; }
+        public string Cnpj { get; set; } = string.Empty;
 
+        [Required]
         [MaxLength(20)]
         [Column("telefone")]
-        public string? Telefone { get; set; }
+        public string Telefone { get; set; } = string.Empty;
 
         [Column("logo")]
         public byte[]? Logo { get; set; }
