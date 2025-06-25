@@ -39,26 +39,55 @@ export default function CadastroRestaurante() {
         }));
     };
     
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        setShowValidationErrors(true);
-        const newErrors = {};
-    
-        // validação manual
-        if (!formData.nome) newErrors.nome = "Nome é obrigatório.";
-        if (!formData.email) newErrors.email = "Email é obrigatório.";
-        if (!formData.cnpj) newErrors.cnpj = "CNPJ é obrigatório.";
-        if (!formData.telefone) newErrors.telefone = "Telefone é obrigatório.";
-        if (!formData.senha) newErrors.senha = "Senha é obrigatória.";
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      setShowValidationErrors(true);
 
-        if (Object.keys(newErrors).length > 0) {
-            setErrors(newErrors);
-            return;
+      const newErrors = {};
+      if (!formData.nome) newErrors.nome = "Nome é obrigatório.";
+      if (!formData.email) newErrors.email = "Email é obrigatório.";
+      if (!formData.cnpj) newErrors.cnpj = "CNPJ é obrigatório.";
+      if (!formData.telefone) newErrors.telefone = "Telefone é obrigatório.";
+      if (!formData.senha) newErrors.senha = "Senha é obrigatória.";
+
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        return;
+      }
+
+      setErrors({});
+      setShowValidationErrors(false);
+
+      const data = new FormData();
+      data.append("nome", formData.nome);
+      data.append("email", formData.email);
+      data.append("cnpj", formData.cnpj);
+      data.append("telefone", formData.telefone);
+      data.append("senha", formData.senha);
+
+      if (formData.logo) data.append("logo", formData.logo);
+      if (formData.banner) data.append("banner", formData.banner);
+
+      try {
+        const response = await fetch("https://localhost:7037/api/Usuarios", {
+          method: "POST",
+          body: data,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Erro ao criar restaurante:", errorData);
+          alert("Erro: " + (errorData.message || "Erro ao criar restaurante"));
+          return;
         }
 
-        setErrors({});
-        setShowValidationErrors(false);
-        console.log("Dados enviados:", formData);
+        const result = await response.json();
+        console.log("Restaurante criado com sucesso:", result);
+        alert("Restaurante criado com sucesso!");
+      } catch (error) {
+        console.error("Erro ao enviar requisição:", error);
+        alert("Erro inesperado ao enviar o formulário.");
+      }
     };
 
 
