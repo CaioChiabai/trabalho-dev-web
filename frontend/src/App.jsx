@@ -1,11 +1,10 @@
 import './App.css'
-import CadastroRestaurante from './pages/CadastroRestaurante'
+import PainelAdmin from './pages/PainelAdmin'
 
 function App() {
-
   return (
     <>
-      <CadastroRestaurante />
+      <PainelAdmin />
     </>
   )
 }

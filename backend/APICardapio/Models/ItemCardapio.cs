@@ -39,7 +39,9 @@ namespace APICardapio.Models
         [Column("data_atualizacao")]
         public DateTime DataAtualizacao { get; set; } = DateTime.UtcNow;        // Relacionamentos
         [ForeignKey("CategoriaId")]
-        public virtual Categoria Categoria { get; set; } = null!;
+        [System.Text.Json.Serialization.JsonIgnore]
+        [Newtonsoft.Json.JsonIgnore]
+        public virtual Categoria? Categoria { get; set; } // Agora nullable e ignorado na serialização
 
         public virtual ICollection<VariacaoItem> VariacoesItem { get; set; } = new List<VariacaoItem>();
     }
