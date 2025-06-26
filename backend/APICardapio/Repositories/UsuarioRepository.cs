@@ -33,6 +33,11 @@ namespace APICardapio.Repositories
                 .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
         }
 
+        public async Task<Usuario?> GetByNomeAsync(string nome)
+{
+        return await _context.Usuarios.FirstOrDefaultAsync(u => u.Nome == nome);
+}
+
         public async Task<Usuario> CreateAsync(Usuario usuario)
         {
             _context.Usuarios.Add(usuario);

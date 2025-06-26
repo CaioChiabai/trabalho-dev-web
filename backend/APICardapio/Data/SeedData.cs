@@ -18,30 +18,30 @@ namespace APICardapio.Data
                 // Criar usuários de exemplo
                 var usuarios = new List<Usuario>
                 {
-                    new Usuario
-                    {
-                        Nome = "Administrador",
-                        Email = "admin@cardapio.com",
-                        Senha = BCrypt.Net.BCrypt.HashPassword("123456"),
-                        DataCriacao = DateTime.UtcNow,
-                        DataAtualizacao = DateTime.UtcNow
-                    },
-                    new Usuario
-                    {
-                        Nome = "João Silva",
-                        Email = "joao@restaurante.com",
-                        Senha = BCrypt.Net.BCrypt.HashPassword("senha123"),
-                        DataCriacao = DateTime.UtcNow,
-                        DataAtualizacao = DateTime.UtcNow
-                    },
-                    new Usuario
-                    {
-                        Nome = "Maria Santos",
-                        Email = "maria@cardapio.com",
-                        Senha = BCrypt.Net.BCrypt.HashPassword("minhasenha"),
-                        DataCriacao = DateTime.UtcNow,
-                        DataAtualizacao = DateTime.UtcNow
-                    }
+                new Usuario
+                {
+                    Nome = "Administrador",
+                    Email = "admin@cardapio.com",
+                    SenhaHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                    DataCriacao = DateTime.UtcNow,
+                    DataAtualizacao = DateTime.UtcNow
+                },
+                new Usuario
+                {
+                    Nome = "João Silva",
+                    Email = "joao@restaurante.com",
+                    SenhaHash = BCrypt.Net.BCrypt.HashPassword("senha123"),
+                    DataCriacao = DateTime.UtcNow,
+                    DataAtualizacao = DateTime.UtcNow
+                },
+                new Usuario
+                {
+                    Nome = "Maria Santos",
+                    Email = "maria@cardapio.com",
+                    SenhaHash = BCrypt.Net.BCrypt.HashPassword("minhasenha"),
+                    DataCriacao = DateTime.UtcNow,
+                    DataAtualizacao = DateTime.UtcNow
+                }
                 };
 
                 await context.Usuarios.AddRangeAsync(usuarios);
