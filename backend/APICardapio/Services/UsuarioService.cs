@@ -40,7 +40,7 @@ namespace APICardapio.Services
                 Email = usuarioDto.Email,
                 Cnpj = usuarioDto.Cnpj,
                 Telefone = usuarioDto.Telefone,
-                Senha = BCrypt.Net.BCrypt.HashPassword(usuarioDto.Senha), // Em produção, use BCrypt ou similar
+                SenhaHash = BCrypt.Net.BCrypt.HashPassword(usuarioDto.Senha), // Em produção, use BCrypt ou similar
                 Logo = usuarioDto.Logo != null ? await ConvertToByteArray(usuarioDto.Logo) : null,
                 Banner = usuarioDto.Banner != null ? await ConvertToByteArray(usuarioDto.Banner) : null,
                 DataCriacao = DateTime.UtcNow,
