@@ -16,7 +16,36 @@ namespace APICardapio.Controllers
         public UsuariosController(IUsuarioService usuarioService)
         {
             _usuarioService = usuarioService;
-        }        
+        }
+
+        [HttpPost("login")]
+        [SwaggerOperation(
+            Summary = "Login de usuário",
+            Description = "Realiza o login de um usuário com nome e senha",
+            OperationId = "LoginUsuario"
+        )]
+        [SwaggerResponse(200, "Login realizado com sucesso", typeof(object))]
+        [SwaggerResponse(401, "Nome ou senha inválidos", typeof(object))]
+        [SwaggerResponse(500, "Erro interno do servidor", typeof(object))]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> Login([FromBody] UsuarioLoginDto loginDto)
+        {
+            try
+            {
+                var result = await _usuarioService.LoginAsync(loginDto);
+                if (result == null)
+                {
+                    return Unauthorized(new { message = "Nome ou senha inválidos." });
+                }
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro interno do servidor", details = ex.Message });
+            }
+        }   
 
 
         [HttpGet]

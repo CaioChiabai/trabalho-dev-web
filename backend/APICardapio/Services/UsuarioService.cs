@@ -7,10 +7,12 @@ namespace APICardapio.Services
     public class UsuarioService : IUsuarioService
     {
         private readonly IUsuarioRepository _usuarioRepository;
+        private readonly JwtService _jwtService;
 
-        public UsuarioService(IUsuarioRepository usuarioRepository)
+        public UsuarioService(IUsuarioRepository usuarioRepository, JwtService jwtService)
         {
             _usuarioRepository = usuarioRepository;
+            _jwtService = jwtService;
         }
 
         public async Task<IEnumerable<UsuarioResponseDto>> GetAllAsync()
@@ -38,7 +40,7 @@ namespace APICardapio.Services
                 Email = usuarioDto.Email,
                 Cnpj = usuarioDto.Cnpj,
                 Telefone = usuarioDto.Telefone,
-                Senha = HashPassword(usuarioDto.Senha), // Em produção, use BCrypt ou similar
+                Senha = BCrypt.Net.BCrypt.HashPassword(usuarioDto.Senha), // Em produção, use BCrypt ou similar
                 Logo = usuarioDto.Logo != null ? await ConvertToByteArray(usuarioDto.Logo) : null,
                 Banner = usuarioDto.Banner != null ? await ConvertToByteArray(usuarioDto.Banner) : null,
                 DataCriacao = DateTime.UtcNow,
@@ -118,11 +120,28 @@ namespace APICardapio.Services
             return memoryStream.ToArray();
         }
 
-        private static string HashPassword(string password)
+        public async Task<UsuarioLoginResponseDto> LoginAsync(UsuarioLoginDto loginDto)
         {
-            // IMPORTANTE: Em produção, use BCrypt, Argon2 ou similar
-            // Este é apenas um exemplo simples
-            return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(password));
+            var usuario = await _usuarioRepository.GetByNomeAsync(loginDto.Nome);
+            if (usuario == null) 
+            {
+                throw new UnauthorizedAccessException("Nome de usuário ou senha inválidos.");
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(loginDto.Senha, usuario.SenhaHash))
+            {
+                throw new UnauthorizedAccessException("Nome de usuário ou senha inválidos.");
+            }
+
+            var token = _jwtService.GenerateToken(usuario);
+
+            return new UsuarioLoginResponseDto
+            {
+                Id = usuario.Id,
+                Nome = usuario.Nome,
+                Token = token,
+                
+            };
         }
     }
 }
