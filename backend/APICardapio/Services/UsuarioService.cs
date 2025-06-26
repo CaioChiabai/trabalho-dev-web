@@ -26,7 +26,6 @@ namespace APICardapio.Services
             var usuario = await _usuarioRepository.GetByIdAsync(id);
             return usuario != null ? MapToResponseDto(usuario) : null;
         }
-
         public async Task<UsuarioResponseDto> CreateAsync(UsuarioCreateDto usuarioDto)
         {
             // Verificar se email já existe
@@ -39,8 +38,13 @@ namespace APICardapio.Services
             {
                 Nome = usuarioDto.Nome,
                 Email = usuarioDto.Email,
-                SenhaHash = BCrypt.Net.BCrypt.HashPassword(usuarioDto.Senha), // Hash seguro da senha
+                Cnpj = usuarioDto.Cnpj,
+                Telefone = usuarioDto.Telefone,
+                Senha = BCrypt.Net.BCrypt.HashPassword(usuarioDto.Senha), // Em produção, use BCrypt ou similar
+                Logo = usuarioDto.Logo != null ? await ConvertToByteArray(usuarioDto.Logo) : null,
+                Banner = usuarioDto.Banner != null ? await ConvertToByteArray(usuarioDto.Banner) : null,
                 DataCriacao = DateTime.UtcNow,
+                DataAtualizacao = DateTime.UtcNow,
                 Ativo = true
             };
 
@@ -57,11 +61,33 @@ namespace APICardapio.Services
             if (await _usuarioRepository.EmailExistsAsync(usuarioDto.Email, id))
             {
                 throw new InvalidOperationException("Email já está em uso por outro usuário.");
-            }
-
-            usuario.Nome = usuarioDto.Nome;
+            }            usuario.Nome = usuarioDto.Nome;
             usuario.Email = usuarioDto.Email;
             usuario.Ativo = usuarioDto.Ativo;
+            usuario.DataAtualizacao = DateTime.UtcNow;
+
+            // Atualizar CNPJ e Telefone se fornecidos
+            if (!string.IsNullOrEmpty(usuarioDto.Cnpj))
+            {
+                usuario.Cnpj = usuarioDto.Cnpj;
+            }
+            
+            if (!string.IsNullOrEmpty(usuarioDto.Telefone))
+            {
+                usuario.Telefone = usuarioDto.Telefone;
+            }
+
+            // Atualizar logo se fornecida
+            if (usuarioDto.Logo != null)
+            {
+                usuario.Logo = await ConvertToByteArray(usuarioDto.Logo);
+            }
+
+            // Atualizar banner se fornecido
+            if (usuarioDto.Banner != null)
+            {
+                usuario.Banner = await ConvertToByteArray(usuarioDto.Banner);
+            }
 
             var usuarioAtualizado = await _usuarioRepository.UpdateAsync(usuario);
             return MapToResponseDto(usuarioAtualizado);
@@ -70,18 +96,28 @@ namespace APICardapio.Services
         public async Task<bool> DeleteAsync(int id)
         {
             return await _usuarioRepository.DeleteAsync(id);
-        }
-
-        private static UsuarioResponseDto MapToResponseDto(Usuario usuario)
+        }        private static UsuarioResponseDto MapToResponseDto(Usuario usuario)
         {
             return new UsuarioResponseDto
             {
                 Id = usuario.Id,
                 Nome = usuario.Nome,
                 Email = usuario.Email,
+                Cnpj = usuario.Cnpj,
+                Telefone = usuario.Telefone,
+                LogoUrl = usuario.Logo != null ? Convert.ToBase64String(usuario.Logo) : null,
+                BannerUrl = usuario.Banner != null ? Convert.ToBase64String(usuario.Banner) : null,
                 DataCriacao = usuario.DataCriacao,
+                DataAtualizacao = usuario.DataAtualizacao,
                 Ativo = usuario.Ativo
             };
+        }
+
+        private static async Task<byte[]> ConvertToByteArray(IFormFile file)
+        {
+            using var memoryStream = new MemoryStream();
+            await file.CopyToAsync(memoryStream);
+            return memoryStream.ToArray();
         }
 
         public async Task<UsuarioLoginResponseDto> LoginAsync(UsuarioLoginDto loginDto)

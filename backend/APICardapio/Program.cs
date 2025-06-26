@@ -6,8 +6,6 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-DotNetEnv.Env.Load();
-
 builder.Services.AddScoped<JwtService>();
 
 // Configuração para PostgreSQL

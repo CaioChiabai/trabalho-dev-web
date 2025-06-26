@@ -36,7 +36,9 @@ namespace APICardapio.Models
 
         // Relacionamentos
         [ForeignKey("CardapioId")]
-        public virtual Cardapio Cardapio { get; set; } = null!;
+        [System.Text.Json.Serialization.JsonIgnore]
+        [Newtonsoft.Json.JsonIgnore]
+        public virtual Cardapio? Cardapio { get; set; } // Agora nullable e ignorado na serialização
 
         public virtual ICollection<ItemCardapio> ItensCardapio { get; set; } = new List<ItemCardapio>();
     }
