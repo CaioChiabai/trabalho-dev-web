@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import "../App.css";
 
 const PainelAdmin = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [abaAtiva, setAbaAtiva] = useState("cardapios");
   const [cardapios, setCardapios] = useState([]);
   const [novoNome, setNovoNome] = useState("");
@@ -30,17 +34,33 @@ const PainelAdmin = () => {
   const [cardapioSelecionado, setCardapioSelecionado] = useState(null);
   const [categoriaSelecionada, setCategoriaSelecionada] = useState(null);
 
-  // Carregar cardápios do backend ao montar
+  // Carregar cardápios do backend ao montar, mas apenas quando o usuário estiver disponível
   useEffect(() => {
-    fetchCardapios();
-  }, []);
+    if (user?.id) {
+      fetchCardapios();
+    }
+  }, [user]);
 
   // Função para buscar cardápios do backend
   const fetchCardapios = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/cardapios");
+      const usuarioId = user?.id;
+      if (!usuarioId) {
+        console.error("Usuário não identificado");
+        return;
+      }
+      
+      console.log("Buscando cardápios para usuário:", usuarioId);
+      
+      const response = await fetch(`http://localhost:5000/api/cardapios/usuario/${usuarioId}`);
+      
+      console.log("Status da busca de cardápios:", response.status);
+      
       if (!response.ok) throw new Error("Erro ao buscar cardápios");
       const data = await response.json();
+      
+      console.log("Cardápios encontrados:", data);
+      
       setCardapios(data);
     } catch (error) {
       console.error("Erro ao buscar cardápios:", error);
@@ -117,25 +137,49 @@ const PainelAdmin = () => {
     }
   };
 
+  // Função para iniciar edição de categoria
+  const iniciarEdicaoCategoria = (id, nome) => {
+    setEditandoCategoriaId(id);
+    setEditCategoriaNome(nome);
+  };
+
   // Adicionar cardápio com categorias selecionadas (API)
   const adicionarCardapio = async () => {
     if (novoNome.trim() === "") return;
     try {
-      const usuarioId = 1; // ou outro id válido
+      const usuarioId = user?.id; // Usar o ID do usuário logado
+      if (!usuarioId) {
+        alert("Erro: usuário não identificado");
+        return;
+      }
+      
+      console.log("Enviando dados do cardápio:", { nome: novoNome, usuarioId });
+      
       const response = await fetch("http://localhost:5000/api/cardapios", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nome: novoNome, usuarioId })
       });
+      
+      console.log("Status da resposta:", response.status);
+      
       if (!response.ok) {
         const errorText = await response.text();
+        console.error("Erro da API:", errorText);
         throw new Error(errorText);
       }
+      
+      const resultado = await response.json();
+      console.log("Cardápio criado com sucesso:", resultado);
+      
       await fetchCardapios();
       setNovoNome("");
       setCategoriasSelecionadas([]);
       setShowAddCardapio(false);
+      
+      alert("Cardápio criado com sucesso!");
     } catch (error) {
+      console.error("Erro completo:", error);
       alert("Erro ao criar cardápio: " + error.message);
     }
   };
@@ -255,6 +299,12 @@ const PainelAdmin = () => {
     }
   };
 
+  // Função para fazer logout
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
   // Sidebar navigation state (removido Dashboard e Perfil)
   const [sidebar, setSidebar] = useState([
     { label: 'Cardápios', icon: '📋', active: abaAtiva === 'cardapios' },
@@ -290,9 +340,30 @@ const PainelAdmin = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header com informações do usuário */}
+      <header className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900">Painel Administrativo</h1>
+            <p className="text-sm text-gray-600">
+              Bem-vindo, {user?.nome || 'Usuário'}
+            </p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+          >
+            Sair
+          </button>
+        </div>
+      </header>
+      
+      <div className="flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-white flex flex-col justify-between min-h-screen">
+      <aside className="w-64 bg-white flex flex-col justify-between min-h-screen"
+        style={{ height: 'calc(100vh - 72px)' }}
+      >
         <div>
           <div className="flex items-center gap-2 px-6 py-6 text-2xl font-bold text-gray-900 border-b" style={{ minHeight: '72px', borderBottom: '1.5px solid #e5e7eb' }}>
             <span style={{ marginRight: 'auto' }}>RestauranteAdmin</span>
@@ -525,6 +596,7 @@ const PainelAdmin = () => {
           </section>
         )}
       </main>
+      </div>
     </div>
   );
 };

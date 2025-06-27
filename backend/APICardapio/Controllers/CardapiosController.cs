@@ -26,8 +26,19 @@ namespace APICardapio.Controllers
             return Ok(cardapios);
         }
 
+        // GET: api/cardapios/usuario/{usuarioId} - DEVE VIR ANTES DA ROTA COM {id}
+        [HttpGet("usuario/{usuarioId:int}")]
+        public async Task<IActionResult> GetCardapiosByUsuario(int usuarioId)
+        {
+            var cardapios = await _context.Cardapios
+                .Include(c => c.Categorias)
+                .Where(c => c.UsuarioId == usuarioId)
+                .ToListAsync();
+            return Ok(cardapios);
+        }
+
         // GET: api/cardapios/5
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<IActionResult> GetCardapio(int id)
         {
             var cardapio = await _context.Cardapios.FindAsync(id);
