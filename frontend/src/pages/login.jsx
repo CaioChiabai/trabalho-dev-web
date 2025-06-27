@@ -1,8 +1,12 @@
 import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import olhoAberto from "../assets/images/olho_aberto.ico";
 import olhoFechado from "../assets/images/olho_fechado.ico";
 
 export default function Login() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     nome: "",
     senha: "",
@@ -63,14 +67,15 @@ export default function Login() {
       const data = await response.json();
 
       if (data.token) {
-        // Aqui você pode salvar o token no localStorage e redirecionar o usuário
-        // localStorage.setItem("token", data.token);
-        // window.location.href = "/"; // redireciona para a home
-        alert("Login realizado!"); // Remova este alert se quiser
+        // Fazer login usando o contexto de autenticação
+        login(data, data.token);
+        // Redirecionar para o painel admin
+        navigate("/painel");
       } else {
         setErrors({ geral: "Nome ou senha inválidos." });
       }
     } catch (error) {
+      console.error("Erro ao fazer login:", error);
       setErrors({ geral: "Erro ao conectar com o servidor." });
     } finally {
       setLoading(false);
@@ -166,6 +171,20 @@ export default function Login() {
               </button>
             </div>
           </form>
+
+          <div className="mt-6">
+            <div className="text-center">
+              <p className="text-sm text-gray-600">
+                Não tem uma conta?{" "}
+                <Link 
+                  to="/cadastro" 
+                  className="font-medium text-indigo-600 hover:text-indigo-500"
+                >
+                  Cadastre-se aqui
+                </Link>
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -1,8 +1,12 @@
 import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import olhoAberto from "../assets/images/olho_aberto.ico";
 import olhoFechado from "../assets/images/olho_fechado.ico";
 
 export default function CadastroRestaurante() {
+    const navigate = useNavigate();
+    const { login } = useAuth();
 
     const [formData, setFormData] = useState({
     nome: '',
@@ -69,7 +73,7 @@ export default function CadastroRestaurante() {
       if (formData.banner) data.append("banner", formData.banner);
 
       try {
-        const response = await fetch("https://localhost:7037/api/Usuarios", {
+        const response = await fetch("http://localhost:5000/api/usuarios", {
           method: "POST",
           body: data,
         });
@@ -77,16 +81,25 @@ export default function CadastroRestaurante() {
         if (!response.ok) {
           const errorData = await response.json();
           console.error("Erro ao criar restaurante:", errorData);
-          alert("Erro: " + (errorData.message || "Erro ao criar restaurante"));
+          setErrors({ geral: errorData.message || "Erro ao criar restaurante" });
           return;
         }
 
         const result = await response.json();
         console.log("Restaurante criado com sucesso:", result);
-        alert("Restaurante criado com sucesso!");
+        
+        // Se o cadastro retornar um token, fazer login automaticamente
+        if (result.token) {
+          login(result.usuario || { nome: formData.nome, email: formData.email }, result.token);
+          navigate("/painel");
+        } else {
+          // Caso contrário, redirecionar para login
+          alert("Cadastro realizado com sucesso! Faça o login.");
+          navigate("/login");
+        }
       } catch (error) {
         console.error("Erro ao enviar requisição:", error);
-        alert("Erro inesperado ao enviar o formulário.");
+        setErrors({ geral: "Erro inesperado ao enviar o formulário." });
       }
     };
 
@@ -270,6 +283,20 @@ export default function CadastroRestaurante() {
             </div>
 
           </form>
+
+          <div className="mt-6">
+            <div className="text-center">
+              <p className="text-sm text-gray-600">
+                Já tem uma conta?{" "}
+                <Link 
+                  to="/login" 
+                  className="font-medium text-indigo-600 hover:text-indigo-500"
+                >
+                  Faça login aqui
+                </Link>
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
