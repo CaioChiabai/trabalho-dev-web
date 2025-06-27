@@ -122,15 +122,20 @@ namespace APICardapio.Services
 
         public async Task<UsuarioLoginResponseDto> LoginAsync(UsuarioLoginDto loginDto)
         {
-            var usuario = await _usuarioRepository.GetByNomeAsync(loginDto.Nome);
+            var usuario = await _usuarioRepository.GetByEmailAsync(loginDto.Email);
             if (usuario == null) 
             {
-                throw new UnauthorizedAccessException("Nome de usuário ou senha inválidos.");
+                throw new UnauthorizedAccessException("Email ou senha inválidos.");
+            }
+
+            if (!usuario.Ativo)
+            {
+                throw new UnauthorizedAccessException("Usuário inativo. Entre em contato com o administrador.");
             }
 
             if (!BCrypt.Net.BCrypt.Verify(loginDto.Senha, usuario.SenhaHash))
             {
-                throw new UnauthorizedAccessException("Nome de usuário ou senha inválidos.");
+                throw new UnauthorizedAccessException("Email ou senha inválidos.");
             }
 
             var token = _jwtService.GenerateToken(usuario);
