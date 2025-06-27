@@ -37,6 +37,21 @@ namespace APICardapio.Controllers
             return Ok(cardapios);
         }
 
+        // GET: api/cardapios/publico/{id} - Rota pública para visualização do cardápio
+        [HttpGet("publico/{id:int}")]
+        public async Task<IActionResult> GetCardapioPublico(int id)
+        {
+            var cardapio = await _context.Cardapios
+                .Include(c => c.Categorias)
+                    .ThenInclude(cat => cat.ItensCardapio)
+                .FirstOrDefaultAsync(c => c.Id == id);
+                
+            if (cardapio == null)
+                return NotFound(new { message = "Cardápio não encontrado" });
+                
+            return Ok(cardapio);
+        }
+
         // GET: api/cardapios/5
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetCardapio(int id)
