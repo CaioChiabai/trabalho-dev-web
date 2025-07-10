@@ -652,8 +652,12 @@ const PainelAdmin = () => {
                     <div className="col-span-full text-gray-400 text-center">Nenhuma categoria cadastrada.</div>
                   )}
                   {categorias.filter(cat => cat.cardapioId === cardapioSelecionado.id).map(c => (
-                    <div key={c.id} className="bg-white rounded-lg shadow p-6 border">
-                      <div className="font-semibold text-gray-900 mb-2 cursor-pointer" onClick={() => selecionarCategoria(c)}>{c.nome}</div>
+                    <div 
+                      key={c.id} 
+                      className="bg-white rounded-lg shadow p-6 border cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => selecionarCategoria(c)}
+                    >
+                      <div className="font-semibold text-gray-900 mb-2">{c.nome}</div>
                       <div className="text-xs text-gray-500">Clique para gerenciar itens desta categoria</div>
                     </div>
                   ))}
