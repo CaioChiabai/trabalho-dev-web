@@ -69,6 +69,10 @@ dotnet run
 
 ## 📚 Endpoints da API
 
+### Autenticação
+
+- `POST /api/usuarios/login` - Login com email e senha
+
 ### Usuários
 
 - `GET /api/usuarios` - Listar todos os usuários
@@ -76,6 +80,25 @@ dotnet run
 - `POST /api/usuarios` - Criar novo usuário
 - `PUT /api/usuarios/{id}` - Atualizar usuário
 - `DELETE /api/usuarios/{id}` - Deletar usuário (soft delete)
+
+### Exemplo de Requisição POST /api/usuarios/login
+
+```json
+{
+  "email": "contato@restaurante.com",
+  "senha": "123456"
+}
+```
+
+### Exemplo de Resposta Login
+
+```json
+{
+  "id": 1,
+  "nome": "Restaurante Exemplo",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
 
 ### Exemplo de Requisição POST /api/usuarios
 
@@ -104,6 +127,7 @@ dotnet run
 - **Framework**: .NET 8
 - **ORM**: Entity Framework Core 8
 - **Banco de Dados**: PostgreSQL
+- **Autenticação**: JWT com BCrypt para hash de senhas
 - **Documentação**: Swagger/OpenAPI
 - **Arquitetura**: Repository Pattern + Service Layer
 
@@ -125,9 +149,10 @@ Endpoints que podem ser implementados:
 4. **Variações**
    - CRUD para variações dos itens
 
-5. **Autenticação**
-   - JWT Authentication
-   - Autorização por roles
+5. **Autenticação** ✅
+   - JWT Authentication (implementado)
+   - Login com email e senha (implementado)
+   - Hash seguro de senhas com BCrypt (implementado)
 
 ## 🐛 Desenvolvimento
 
@@ -145,6 +170,8 @@ dotnet test
 ## 📝 Notas
 
 - A API utiliza soft delete para usuários (marca como inativo)
-- Senhas são hasheadas (implementar BCrypt em produção)
+- Senhas são hasheadas com BCrypt para segurança
+- Login é realizado com email e senha, retornando token JWT
+- Usuários inativos não conseguem fazer login
 - Migrations são executadas automaticamente no startup
 - Dados iniciais de categorias são criados automaticamente
