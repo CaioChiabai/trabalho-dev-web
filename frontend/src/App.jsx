@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import CadastroRestaurante from './pages/CadastroRestaurante'
 import Login from './pages/Login'
 import PainelAdmin from './pages/PainelAdmin'
+import CardapioPublico from './pages/CardapioPublico'
 
 // Componente para redirecionar baseado na autenticação
 function AuthRedirect() {
@@ -32,6 +33,7 @@ function App() {
           <Route path="/" element={<AuthRedirect />} />
           <Route path="/login" element={<Login />} />
           <Route path="/cadastro" element={<CadastroRestaurante />} />
+          <Route path="/cardapio/:id" element={<CardapioPublico />} />
           <Route 
             path="/painel" 
             element={

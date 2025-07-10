@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { API_ENDPOINTS } from "../config/api";
 import "../App.css";
 
 const PainelAdmin = () => {
@@ -33,6 +34,9 @@ const PainelAdmin = () => {
   const [etapa, setEtapa] = useState('cardapio'); // 'cardapio' | 'categorias'
   const [cardapioSelecionado, setCardapioSelecionado] = useState(null);
   const [categoriaSelecionada, setCategoriaSelecionada] = useState(null);
+  // Estados para link público
+  const [linkPublico, setLinkPublico] = useState('');
+  const [showLinkModal, setShowLinkModal] = useState(false);
 
   // Carregar cardápios do backend ao montar, mas apenas quando o usuário estiver disponível
   useEffect(() => {
@@ -52,7 +56,7 @@ const PainelAdmin = () => {
       
       console.log("Buscando cardápios para usuário:", usuarioId);
       
-      const response = await fetch(`http://localhost:5000/api/cardapios/usuario/${usuarioId}`);
+      const response = await fetch(`${API_ENDPOINTS.cardapios}/usuario/${usuarioId}`);
       
       console.log("Status da busca de cardápios:", response.status);
       
@@ -75,7 +79,7 @@ const PainelAdmin = () => {
   // Função para buscar categorias do backend
   const fetchCategorias = async (cardapioId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/cardapios/${cardapioId}/categorias`);
+      const response = await fetch(`${API_ENDPOINTS.cardapios}/${cardapioId}/categorias`);
       if (!response.ok) throw new Error("Erro ao buscar categorias");
       const data = await response.json();
       setCategorias(data);
@@ -88,7 +92,7 @@ const PainelAdmin = () => {
   const adicionarCategoria = async () => {
     if (novaCategoria.trim() === "" || !cardapioSelecionado) return;
     try {
-      const response = await fetch(`http://localhost:5000/api/categorias`, {
+      const response = await fetch(`${API_ENDPOINTS.categorias}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nome: novaCategoria, cardapioId: cardapioSelecionado.id })
@@ -143,6 +147,19 @@ const PainelAdmin = () => {
     setEditCategoriaNome(nome);
   };
 
+  // Função para gerar link público
+  const gerarLinkPublico = (cardapioId) => {
+    const link = `${window.location.origin}/cardapio/${cardapioId}`;
+    setLinkPublico(link);
+    setShowLinkModal(true);
+  };
+
+  // Função para copiar link
+  const copiarLink = () => {
+    navigator.clipboard.writeText(linkPublico);
+    alert('Link copiado para a área de transferência!');
+  };
+
   // Adicionar cardápio com categorias selecionadas (API)
   const adicionarCardapio = async () => {
     if (novoNome.trim() === "") return;
@@ -155,7 +172,7 @@ const PainelAdmin = () => {
       
       console.log("Enviando dados do cardápio:", { nome: novoNome, usuarioId });
       
-      const response = await fetch("http://localhost:5000/api/cardapios", {
+      const response = await fetch(API_ENDPOINTS.cardapios, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nome: novoNome, usuarioId })
@@ -419,7 +436,10 @@ const PainelAdmin = () => {
                     <button className="flex-1 flex items-center gap-2 px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-gray-700 text-sm font-medium" onClick={() => selecionarCardapio(c)}>
                       <span>📂</span> Gerenciar Categorias
                     </button>
-                    <button className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 rounded hover:bg-red-200 text-red-700" onClick={() => removerCardapio(c.id)}>
+                    <button className="flex-1 flex items-center gap-2 px-3 py-2 bg-green-100 rounded hover:bg-green-200 text-green-700 text-sm font-medium" onClick={() => gerarLinkPublico(c.id)}>
+                      <span>🔗</span> Link Público
+                    </button>
+                    <button className="flex items-center justify-center px-3 py-2 bg-red-100 rounded hover:bg-red-200 text-red-700" onClick={() => removerCardapio(c.id)}>
                       <span>🗑️</span>
                     </button>
                   </div>
@@ -596,6 +616,32 @@ const PainelAdmin = () => {
           </section>
         )}
       </main>
+      
+      {/* Modal para mostrar link público */}
+      {showLinkModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Link Público do Cardápio</h3>
+            <div className="bg-gray-100 p-3 rounded mb-4 break-all text-sm">
+              {linkPublico}
+            </div>
+            <div className="flex gap-2">
+              <button 
+                className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                onClick={copiarLink}
+              >
+                Copiar Link
+              </button>
+              <button 
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                onClick={() => setShowLinkModal(false)}
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );
