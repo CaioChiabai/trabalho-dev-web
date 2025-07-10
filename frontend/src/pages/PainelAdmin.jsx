@@ -2,7 +2,20 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { API_ENDPOINTS } from "../config/api";
+import usuarioDefault from "../assets/images/usuario.png";
 import "../App.css";
+
+// Helper function para converter base64 em data URL
+const getImageDataUrl = (base64String, defaultImage) => {
+  if (!base64String) return defaultImage;
+  
+  // Se já é uma data URL completa, retorna como está
+  if (base64String.startsWith('data:')) return base64String;
+  
+  // Se é apenas a string base64, adiciona o prefixo
+  // Assume JPEG por padrão, mas pode ser ajustado conforme necessário
+  return `data:image/jpeg;base64,${base64String}`;
+};
 
 const PainelAdmin = () => {
   const { user, logout } = useAuth();
@@ -37,10 +50,26 @@ const PainelAdmin = () => {
   // Estados para link público
   const [linkPublico, setLinkPublico] = useState('');
   const [showLinkModal, setShowLinkModal] = useState(false);
+  
+  // Estados para edição das informações do restaurante
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editUsuario, setEditUsuario] = useState({
+    nome: '',
+    email: '',
+    cnpj: '',
+    telefone: '',
+    logoFile: null,
+    bannerFile: null
+  });
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [bannerPreview, setBannerPreview] = useState(null);
 
   // Carregar cardápios do backend ao montar, mas apenas quando o usuário estiver disponível
   useEffect(() => {
     if (user?.id) {
+      console.log('Dados completos do usuário no PainelAdmin:', user); // Debug detalhado
+      console.log('LogoUrl:', user.logoUrl);
+      console.log('BannerUrl:', user.bannerUrl);
       fetchCardapios();
     }
   }, [user]);
@@ -426,6 +455,111 @@ const PainelAdmin = () => {
     }
   };
 
+  // Funções para edição das informações do restaurante
+  const abrirEditModal = () => {
+    setEditUsuario({
+      nome: user?.nome || '',
+      email: user?.email || '',
+      cnpj: user?.cnpj || '',
+      telefone: user?.telefone || '',
+      logoFile: null,
+      bannerFile: null
+    });
+    setLogoPreview(user?.logoUrl ? getImageDataUrl(user.logoUrl) : null);
+    setBannerPreview(user?.bannerUrl ? getImageDataUrl(user.bannerUrl) : null);
+    setShowEditModal(true);
+  };
+
+  const fecharEditModal = () => {
+    setShowEditModal(false);
+    setEditUsuario({
+      nome: '',
+      email: '',
+      cnpj: '',
+      telefone: '',
+      logoFile: null,
+      bannerFile: null
+    });
+    setLogoPreview(null);
+    setBannerPreview(null);
+  };
+
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setEditUsuario({ ...editUsuario, logoFile: file });
+      
+      // Criar preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setLogoPreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleBannerChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setEditUsuario({ ...editUsuario, bannerFile: file });
+      
+      // Criar preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setBannerPreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const salvarEdicaoUsuario = async () => {
+    try {
+      const formData = new FormData();
+      
+      // Adicionar dados do usuário
+      formData.append('nome', editUsuario.nome);
+      formData.append('email', editUsuario.email);
+      formData.append('cnpj', editUsuario.cnpj);
+      formData.append('telefone', editUsuario.telefone);
+      
+      // Adicionar arquivos se selecionados
+      if (editUsuario.logoFile) {
+        formData.append('logoFile', editUsuario.logoFile);
+      }
+      if (editUsuario.bannerFile) {
+        formData.append('bannerFile', editUsuario.bannerFile);
+      }
+
+      console.log('Atualizando usuário ID:', user.id);
+      
+      const response = await fetch(`${API_ENDPOINTS.usuarios}/${user.id}`, {
+        method: 'PUT',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`Erro ${response.status}: ${errorData}`);
+      }
+
+      const updatedUser = await response.json();
+      console.log('Usuário atualizado:', updatedUser);
+      
+      // Atualizar contexto de autenticação se necessário
+      // Você pode precisar implementar uma função updateUser no AuthContext
+      
+      fecharEditModal();
+      alert('Informações atualizadas com sucesso!');
+      
+      // Recarregar a página para atualizar as informações do usuário
+      window.location.reload();
+      
+    } catch (error) {
+      console.error('Erro ao atualizar usuário:', error);
+      alert('Erro ao atualizar informações: ' + error.message);
+    }
+  };
+
   // Função para fazer logout
   const handleLogout = () => {
     logout();
@@ -481,11 +615,51 @@ const PainelAdmin = () => {
       {/* Header com informações do usuário */}
       <header className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">Painel Administrativo</h1>
-            <p className="text-sm text-gray-600">
-              Bem-vindo, {user?.nome || 'Usuário'}
-            </p>
+          <div className="flex items-center gap-4">
+            {/* Logo do restaurante - clicável para editar */}
+            <div className="flex-shrink-0">
+              <div className="relative group">
+                <button
+                  onClick={abrirEditModal}
+                  className="p-0 border-0 bg-transparent cursor-pointer hover:opacity-80 transition-opacity"
+                >
+                  <img 
+                    src={getImageDataUrl(user?.logoUrl, usuarioDefault)}
+                    alt="Logo do restaurante - Clique para editar"
+                    className="h-12 w-12 rounded-full object-cover border-2 border-gray-200 shadow-sm"
+                    onLoad={() => {
+                      console.log('Logo carregada com sucesso:', user?.logoUrl ? 'Base64 image' : 'Default image');
+                    }}
+                    onError={(e) => {
+                      console.log('Erro ao carregar logo Base64, usando imagem padrão');
+                      e.target.src = usuarioDefault;
+                    }}
+                  />
+                </button>
+                {/* Ícone de edição */}
+                <button 
+                  className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  onClick={abrirEditModal}
+                  title="Editar informações do restaurante"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold text-gray-900">Painel Administrativo</h1>
+              <p className="text-sm text-gray-600">
+                Bem-vindo, {user?.nome || 'Usuário'}
+              </p>
+              <button 
+                onClick={abrirEditModal}
+                className="text-xs text-blue-600 hover:text-blue-800 transition-colors"
+              >
+                Editar informações
+              </button>
+            </div>
           </div>
           <button
             onClick={handleLogout}
@@ -497,6 +671,34 @@ const PainelAdmin = () => {
       </header>
       
       <div className="flex">
+      {/* Sidebar */}
+      <aside className="w-64 bg-white flex flex-col justify-between min-h-screen"
+        style={{ height: 'calc(100vh - 72px)' }}
+      >
+        <div>
+          <div className="flex items-center gap-2 px-6 py-6 text-2xl font-bold text-gray-900 border-b" style={{ minHeight: '72px', borderBottom: '1.5px solid #e5e7eb' }}>
+            <span style={{ marginRight: 'auto' }}>RestauranteAdmin</span>
+            <span className="text-xl">☰</span>
+          </div>
+          <nav className="mt-6">
+            <ul className="space-y-1">
+              {sidebar.map((item, idx) => (
+                <li key={item.label}>
+                  <button
+                    className={`w-full flex items-center gap-3 px-6 py-3 text-base rounded-l-full transition-colors ${item.active ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}
+                    onClick={() => {
+                      setAbaAtiva('cardapios');
+                    }}
+                  >
+                    <span>{item.icon}</span> {item.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+        <div className="px-6 py-4 text-xs text-gray-400 border-t">RestauranteAdmin v1.0</div>
+      </aside>
       {/* Main content */}
       <main className="flex-1 p-8 border-l" style={{ borderLeft: '1.5px solid #e5e7eb' }}>
         {etapa === 'cardapio' && (
@@ -762,6 +964,133 @@ const PainelAdmin = () => {
                 onClick={() => setShowLinkModal(false)}
               >
                 Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para editar informações do restaurante */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-bold mb-6">Editar Informações do Restaurante</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Informações básicas */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nome do Restaurante
+                  </label>
+                  <input
+                    type="text"
+                    value={editUsuario.nome}
+                    onChange={(e) => setEditUsuario({ ...editUsuario, nome: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Nome do restaurante"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={editUsuario.email}
+                    onChange={(e) => setEditUsuario({ ...editUsuario, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="email@restaurante.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    CNPJ
+                  </label>
+                  <input
+                    type="text"
+                    value={editUsuario.cnpj}
+                    onChange={(e) => setEditUsuario({ ...editUsuario, cnpj: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="00.000.000/0000-00"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Telefone
+                  </label>
+                  <input
+                    type="text"
+                    value={editUsuario.telefone}
+                    onChange={(e) => setEditUsuario({ ...editUsuario, telefone: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="(11) 99999-9999"
+                  />
+                </div>
+              </div>
+
+              {/* Upload de imagens */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Logo do Restaurante
+                  </label>
+                  <div className="flex flex-col items-center gap-3">
+                    {logoPreview && (
+                      <img 
+                        src={logoPreview} 
+                        alt="Preview Logo" 
+                        className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
+                      />
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoChange}
+                      className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Banner do Restaurante
+                  </label>
+                  <div className="flex flex-col items-center gap-3">
+                    {bannerPreview && (
+                      <img 
+                        src={bannerPreview} 
+                        alt="Preview Banner" 
+                        className="w-full h-32 object-cover rounded-lg border-2 border-gray-200"
+                      />
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleBannerChange}
+                      className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Botões de ação */}
+            <div className="flex gap-3 mt-8 pt-6 border-t">
+              <button 
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                onClick={salvarEdicaoUsuario}
+              >
+                Salvar Alterações
+              </button>
+              <button 
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 font-medium"
+                onClick={fecharEditModal}
+              >
+                Cancelar
               </button>
             </div>
           </div>
