@@ -16,7 +16,6 @@ namespace APICardapio.Controllers
             _context = context;
         }
 
-        // GET: api/cardapios
         [HttpGet]
         public async Task<IActionResult> GetCardapios()
         {
@@ -26,7 +25,6 @@ namespace APICardapio.Controllers
             return Ok(cardapios);
         }
 
-        // GET: api/cardapios/usuario/{usuarioId} - DEVE VIR ANTES DA ROTA COM {id}
         [HttpGet("usuario/{usuarioId:int}")]
         public async Task<IActionResult> GetCardapiosByUsuario(int usuarioId)
         {
@@ -37,7 +35,20 @@ namespace APICardapio.Controllers
             return Ok(cardapios);
         }
 
-        // GET: api/cardapios/5
+        [HttpGet("publico/{id:int}")]
+        public async Task<IActionResult> GetCardapioPublico(int id)
+        {
+            var cardapio = await _context.Cardapios
+                .Include(c => c.Categorias)
+                    .ThenInclude(cat => cat.ItensCardapio)
+                .FirstOrDefaultAsync(c => c.Id == id);
+                
+            if (cardapio == null)
+                return NotFound(new { message = "Cardápio não encontrado" });
+                
+            return Ok(cardapio);
+        }
+
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetCardapio(int id)
         {
@@ -47,7 +58,6 @@ namespace APICardapio.Controllers
             return Ok(cardapio);
         }
 
-        // POST: api/cardapios
         [HttpPost]
         public async Task<IActionResult> CreateCardapio([FromBody] Cardapio cardapio)
         {
@@ -73,7 +83,6 @@ namespace APICardapio.Controllers
             }
         }
 
-        // PUT: api/cardapios/5
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateCardapio(int id, [FromBody] Cardapio cardapio)
         {
@@ -84,7 +93,6 @@ namespace APICardapio.Controllers
             return NoContent();
         }
 
-        // DELETE: api/cardapios/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCardapio(int id)
         {
@@ -96,7 +104,6 @@ namespace APICardapio.Controllers
             return NoContent();
         }
 
-        // GET: api/cardapios/{cardapioId}/categorias
         [HttpGet("{cardapioId}/categorias")]
         public async Task<IActionResult> GetCategoriasByCardapio(int cardapioId)
         {
