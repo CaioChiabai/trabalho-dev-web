@@ -497,34 +497,6 @@ const PainelAdmin = () => {
       </header>
       
       <div className="flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white flex flex-col justify-between min-h-screen"
-        style={{ height: 'calc(100vh - 72px)' }}
-      >
-        <div>
-          <div className="flex items-center gap-2 px-6 py-6 text-2xl font-bold text-gray-900 border-b" style={{ minHeight: '72px', borderBottom: '1.5px solid #e5e7eb' }}>
-            <span style={{ marginRight: 'auto' }}>RestauranteAdmin</span>
-            <span className="text-xl">☰</span>
-          </div>
-          <nav className="mt-6">
-            <ul className="space-y-1">
-              {sidebar.map((item, idx) => (
-                <li key={item.label}>
-                  <button
-                    className={`w-full flex items-center gap-3 px-6 py-3 text-base rounded-l-full transition-colors ${item.active ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}
-                    onClick={() => {
-                      if (item.label === 'Cardápios') setAbaAtiva('cardapios');
-                    }}
-                  >
-                    <span>{item.icon}</span> {item.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </div>
-        <div className="px-6 py-4 text-xs text-gray-400 border-t">RestauranteAdmin v1.0</div>
-      </aside>
       {/* Main content */}
       <main className="flex-1 p-8 border-l" style={{ borderLeft: '1.5px solid #e5e7eb' }}>
         {etapa === 'cardapio' && (
