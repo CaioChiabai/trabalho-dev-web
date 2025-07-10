@@ -92,21 +92,30 @@ const PainelAdmin = () => {
   const adicionarCategoria = async () => {
     if (novaCategoria.trim() === "" || !cardapioSelecionado) return;
     try {
+      const novaCategoriaData = {
+        nome: novaCategoria,
+        cardapioId: cardapioSelecionado.id,
+        ativo: true,
+        ordem: 0 // Ordem padrão
+      };
+
+      console.log("Criando nova categoria:", novaCategoriaData);
+
       const response = await fetch(`${API_ENDPOINTS.categorias}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome: novaCategoria, cardapioId: cardapioSelecionado.id })
+        body: JSON.stringify(novaCategoriaData)
       });
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("Erro ao criar categoria:", errorText); // <-- LOG ERRO DETALHADO
+        console.error("Erro ao criar categoria:", errorText);
         throw new Error("Erro ao criar categoria: " + errorText);
       }
       await fetchCategorias(cardapioSelecionado.id);
       setNovaCategoria("");
     } catch (error) {
-      console.error("Erro ao criar categoria (catch):", error); // <-- LOG ERRO DETALHADO
-      alert("Erro ao criar categoria");
+      console.error("Erro ao criar categoria (catch):", error);
+      alert("Erro ao criar categoria: " + error.message);
     }
   };
 
@@ -114,12 +123,13 @@ const PainelAdmin = () => {
   const removerCategoria = async (id) => {
     if (!cardapioSelecionado) return;
     try {
-      const response = await fetch(`http://localhost:5000/api/categorias/${id}`, {
+      const response = await fetch(`${API_ENDPOINTS.categorias}/${id}`, {
         method: "DELETE"
       });
       if (!response.ok) throw new Error("Erro ao remover categoria");
       await fetchCategorias(cardapioSelecionado.id);
     } catch (error) {
+      console.error("Erro ao remover categoria:", error);
       alert("Erro ao remover categoria");
     }
   };
@@ -127,17 +137,40 @@ const PainelAdmin = () => {
   // Editar categoria (API)
   const salvarEdicaoCategoria = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/categorias/${id}`, {
+      // Obter a categoria atual para manter valores que não foram alterados
+      const categoriaAtual = categorias.find(c => c.id === id);
+      if (!categoriaAtual) {
+        throw new Error("Categoria não encontrada");
+      }
+
+      const categoriaToUpdate = {
+        id: id,
+        nome: editCategoriaNome,
+        cardapioId: cardapioSelecionado.id,
+        ativo: categoriaAtual.ativo !== undefined ? categoriaAtual.ativo : true,
+        ordem: categoriaAtual.ordem || 0
+      };
+
+      console.log("Atualizando categoria:", categoriaToUpdate);
+
+      const response = await fetch(`${API_ENDPOINTS.categorias}/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome: editCategoriaNome })
+        body: JSON.stringify(categoriaToUpdate)
       });
-      if (!response.ok) throw new Error("Erro ao editar categoria");
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Erro detalhado ao editar categoria:", errorText);
+        throw new Error("Erro ao editar categoria: " + errorText);
+      }
+      
       await fetchCategorias(cardapioSelecionado.id);
       setEditandoCategoriaId(null);
       setEditCategoriaNome("");
     } catch (error) {
-      alert("Erro ao editar categoria");
+      console.error("Erro ao editar categoria:", error);
+      alert("Erro ao editar categoria: " + error.message);
     }
   };
 
@@ -204,12 +237,13 @@ const PainelAdmin = () => {
   // Remover cardápio (API)
   const removerCardapio = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/cardapios/${id}`, {
+      const response = await fetch(`${API_ENDPOINTS.cardapios}/${id}`, {
         method: "DELETE"
       });
       if (!response.ok) throw new Error("Erro ao remover cardápio");
       await fetchCardapios();
     } catch (error) {
+      console.error("Erro ao remover cardápio:", error);
       alert("Erro ao remover cardápio");
     }
   };
@@ -217,19 +251,47 @@ const PainelAdmin = () => {
   // Editar cardápio (API)
   const salvarEdicao = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/cardapios/${id}`, {
+      // Obter o cardápio atual para manter valores que não foram alterados
+      const cardapioAtual = cardapios.find(c => c.id === id);
+      if (!cardapioAtual) {
+        throw new Error("Cardápio não encontrado");
+      }
+
+      const cardapioToUpdate = {
+        id: id,
+        nome: editNome,
+        usuarioId: user?.id,
+        descricao: cardapioAtual.descricao || "", // Manter descrição existente
+        ativo: cardapioAtual.ativo !== undefined ? cardapioAtual.ativo : true // Manter status ativo
+      };
+
+      console.log("Atualizando cardápio:", cardapioToUpdate);
+      
+      const response = await fetch(`${API_ENDPOINTS.cardapios}/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome: editNome, categorias: categoriasSelecionadas })
+        body: JSON.stringify(cardapioToUpdate)
       });
-      if (!response.ok) throw new Error("Erro ao editar cardápio");
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Erro detalhado ao editar cardápio:", errorText);
+        throw new Error("Erro ao editar cardápio: " + errorText);
+      }
+      
       await fetchCardapios();
       setEditandoId(null);
       setEditNome("");
-      setCategoriasSelecionadas([]);
     } catch (error) {
-      alert("Erro ao editar cardápio");
+      console.error("Erro ao editar cardápio:", error);
+      alert("Erro ao editar cardápio: " + error.message);
     }
+  };
+
+  // Função para iniciar edição de cardápio
+  const iniciarEdicaoCardapio = (id, nome) => {
+    setEditandoId(id);
+    setEditNome(nome);
   };
 
   // Seleção de categorias ao criar cardápio
@@ -249,28 +311,43 @@ const PainelAdmin = () => {
   // Função para buscar itens do backend
   const fetchItens = async (categoriaId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/categorias/${categoriaId}/itens`);
+      const response = await fetch(`${API_ENDPOINTS.categorias}/${categoriaId}/itens`);
       if (!response.ok) throw new Error("Erro ao buscar itens");
       const data = await response.json();
       setItens(data);
     } catch (error) {
+      console.error("Erro ao buscar itens:", error);
       setItens([]);
     }
   };
 
   // Adicionar item (API)
   const adicionarItem = async () => {
-    if (!novoItem.nome.trim() || !novoItem.valor || !categoriaSelecionada) return;
+    if (!novoItem.nome.trim() || !categoriaSelecionada) return;
+    
+    // Validar se o valor é um número
+    const preco = novoItem.valor ? Number(novoItem.valor.toString().replace(',', '.')) : null;
+    if (novoItem.valor && isNaN(preco)) {
+      alert("Valor do item deve ser um número válido");
+      return;
+    }
+    
     try {
-      const response = await fetch(`http://localhost:5000/api/itenscardapio`, {
+      const novoItemData = {
+        nome: novoItem.nome,
+        descricao: novoItem.descricao || "",
+        preco: preco,
+        categoriaId: categoriaSelecionada.id,
+        disponivel: true, // Por padrão, item disponível
+        ordem: 0 // Ordem padrão
+      };
+
+      console.log("Criando novo item:", novoItemData);
+
+      const response = await fetch(`${API_ENDPOINTS.itensCardapio}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nome: novoItem.nome,
-          descricao: novoItem.descricao,
-          preco: Number(novoItem.valor.toString().replace(',', '.')),
-          categoriaId: categoriaSelecionada.id
-        })
+        body: JSON.stringify(novoItemData)
       });
       if (!response.ok) {
         const errorText = await response.text();
@@ -281,7 +358,7 @@ const PainelAdmin = () => {
       setNovoItem({ nome: '', descricao: '', valor: '' });
     } catch (error) {
       console.error("Erro ao criar item (catch):", error);
-      alert("Erro ao criar item");
+      alert("Erro ao criar item: " + error.message);
     }
   };
 
@@ -289,12 +366,13 @@ const PainelAdmin = () => {
   const removerItem = async (id) => {
     if (!categoriaSelecionada) return;
     try {
-      const response = await fetch(`http://localhost:5000/api/itenscardapio/${id}`, {
+      const response = await fetch(`${API_ENDPOINTS.itensCardapio}/${id}`, {
         method: "DELETE"
       });
       if (!response.ok) throw new Error("Erro ao remover item");
       await fetchItens(categoriaSelecionada.id);
     } catch (error) {
+      console.error("Erro ao remover item:", error);
       alert("Erro ao remover item");
     }
   };
@@ -302,17 +380,49 @@ const PainelAdmin = () => {
   // Editar item (API)
   const salvarEdicaoItem = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/itenscardapio/${id}`, {
+      // Validar se o valor é um número
+      const preco = Number(editItem.valor.toString().replace(',', '.'));
+      if (isNaN(preco)) {
+        alert("Valor do item deve ser um número válido");
+        return;
+      }
+      
+      // Obter o item atual para manter valores que não foram alterados
+      const itemAtual = itens.find(i => i.id === id);
+      if (!itemAtual) {
+        throw new Error("Item não encontrado");
+      }
+
+      const itemToUpdate = {
+        id: id,
+        nome: editItem.nome,
+        descricao: editItem.descricao || "",
+        preco: preco,
+        categoriaId: categoriaSelecionada.id,
+        disponivel: itemAtual.disponivel !== undefined ? itemAtual.disponivel : true,
+        ordem: itemAtual.ordem || 0
+      };
+
+      console.log("Atualizando item:", itemToUpdate);
+
+      const response = await fetch(`${API_ENDPOINTS.itensCardapio}/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editItem)
+        body: JSON.stringify(itemToUpdate)
       });
-      if (!response.ok) throw new Error("Erro ao editar item");
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Erro ao editar item:", errorText);
+        throw new Error("Erro ao editar item: " + errorText);
+      }
+      
       await fetchItens(categoriaSelecionada.id);
       setEditandoItemId(null);
       setEditItem({ nome: '', descricao: '', valor: '' });
     } catch (error) {
-      alert("Erro ao editar item");
+      console.error("Erro ao editar item:", error);
+      alert("Erro ao editar item: " + error.message);
     }
   };
 
@@ -354,6 +464,16 @@ const PainelAdmin = () => {
   // Função para voltar para etapa de categorias
   const voltarParaCategorias = () => {
     setCategoriaSelecionada(null);
+  };
+
+  // Função para iniciar edição de item
+  const iniciarEdicaoItem = (id, item) => {
+    setEditandoItemId(id);
+    setEditItem({
+      nome: item.nome,
+      descricao: item.descricao || '',
+      valor: item.preco || 0
+    });
   };
 
   return (
@@ -412,14 +532,37 @@ const PainelAdmin = () => {
             <h1 className="text-3xl font-bold text-gray-900 mb-1">Cardápios</h1>
             <p className="text-gray-500 mb-6">Crie um cardápio para o seu restaurante</p>
             <div className="bg-white rounded-lg shadow p-6 border max-w-lg mb-8">
-              <input
-                type="text"
-                placeholder="Nome do cardápio"
-                value={novoNome}
-                onChange={e => setNovoNome(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm mb-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              />
-              <button className="btn-adicionar w-full" onClick={adicionarCardapio}>Criar Cardápio</button>
+              {editandoId ? (
+                <>
+                  <h2 className="text-xl font-bold mb-4">Editar Cardápio</h2>
+                  <input
+                    type="text"
+                    placeholder="Nome do cardápio"
+                    value={editNome}
+                    onChange={e => setEditNome(e.target.value)}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm mb-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  />
+                  <div className="flex gap-2">
+                    <button className="flex-1 px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" onClick={() => salvarEdicao(editandoId)}>Salvar</button>
+                    <button className="flex-1 px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300" onClick={() => {
+                      setEditandoId(null);
+                      setEditNome("");
+                    }}>Cancelar</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-xl font-bold mb-4">Novo Cardápio</h2>
+                  <input
+                    type="text"
+                    placeholder="Nome do cardápio"
+                    value={novoNome}
+                    onChange={e => setNovoNome(e.target.value)}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm mb-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  />
+                  <button className="btn-adicionar w-full" onClick={adicionarCardapio}>Criar Cardápio</button>
+                </>
+              )}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {cardapios.length === 0 && (
@@ -432,14 +575,17 @@ const PainelAdmin = () => {
                     <span className="px-3 py-1 rounded-full text-xs font-bold bg-indigo-900 text-white">Ativo</span>
                   </div>
                   <div className="text-sm text-gray-700">Categorias: <span className="font-bold">{c.categorias ? c.categorias.length : 0}</span></div>
-                  <div className="flex gap-2 mt-2">
-                    <button className="flex-1 flex items-center gap-2 px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-gray-700 text-sm font-medium" onClick={() => selecionarCardapio(c)}>
-                      <span>📂</span> Gerenciar Categorias
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <button className="flex-1 flex items-center gap-1 px-2 py-2 bg-gray-100 rounded hover:bg-gray-200 text-gray-700 text-sm font-medium" onClick={() => selecionarCardapio(c)}>
+                      <span>📂</span> Gerenciar
                     </button>
-                    <button className="flex-1 flex items-center gap-2 px-3 py-2 bg-green-100 rounded hover:bg-green-200 text-green-700 text-sm font-medium" onClick={() => gerarLinkPublico(c.id)}>
-                      <span>🔗</span> Link Público
+                    <button className="flex-1 flex items-center gap-1 px-2 py-2 bg-yellow-100 rounded hover:bg-yellow-200 text-yellow-700 text-sm font-medium" onClick={() => iniciarEdicaoCardapio(c.id, c.nome)}>
+                      <span>✏️</span> Editar
                     </button>
-                    <button className="flex items-center justify-center px-3 py-2 bg-red-100 rounded hover:bg-red-200 text-red-700" onClick={() => removerCardapio(c.id)}>
+                    <button className="flex-1 flex items-center gap-1 px-2 py-2 bg-green-100 rounded hover:bg-green-200 text-green-700 text-sm font-medium" onClick={() => gerarLinkPublico(c.id)}>
+                      <span>🔗</span> Link
+                    </button>
+                    <button className="px-2 py-2 bg-red-100 rounded hover:bg-red-200 text-red-700" onClick={() => removerCardapio(c.id)}>
                       <span>🗑️</span>
                     </button>
                   </div>
@@ -471,26 +617,28 @@ const PainelAdmin = () => {
                     <li className="text-gray-400 text-center">Nenhuma categoria cadastrada ainda.</li>
                   )}
                   {categorias.filter(cat => cat.cardapioId === cardapioSelecionado.id).map(c => (
-                    <li key={c.id} className="bg-gray-50 p-3 rounded border flex items-center justify-between gap-2">
+                    <li key={c.id} className="bg-gray-50 p-3 rounded border">
                       {editandoCategoriaId === c.id ? (
-                        <>
+                        <div className="flex flex-col gap-2">
                           <input
                             type="text"
                             value={editCategoriaNome}
                             onChange={e => setEditCategoriaNome(e.target.value)}
-                            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm mb-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                           />
-                          <button className="btn-adicionar" onClick={() => salvarEdicaoCategoria(c.id)}>Salvar</button>
-                          <button className="px-3 py-1 rounded bg-gray-200 text-gray-700" onClick={() => setEditandoCategoriaId(null)}>Cancelar</button>
-                        </>
+                          <div className="flex justify-between gap-2 mt-2">
+                            <button className="flex-1 px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" onClick={() => salvarEdicaoCategoria(c.id)}>Salvar</button>
+                            <button className="flex-1 px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300" onClick={() => setEditandoCategoriaId(null)}>Cancelar</button>
+                          </div>
+                        </div>
                       ) : (
-                        <>
-                          <span className="font-medium flex-1 cursor-pointer" onClick={() => selecionarCategoria(c)}>{c.nome}</span>
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium cursor-pointer" onClick={() => selecionarCategoria(c)}>{c.nome}</span>
                           <div className="flex gap-2">
                             <button className="px-3 py-1 rounded bg-gray-200 text-gray-700" onClick={() => iniciarEdicaoCategoria(c.id, c.nome)}>Editar</button>
                             <button className="px-3 py-1 rounded bg-red-500 text-white" onClick={() => removerCategoria(c.id)}>Remover</button>
                           </div>
-                        </>
+                        </div>
                       )}
                     </li>
                   ))}
@@ -551,46 +699,47 @@ const PainelAdmin = () => {
                     <li className="text-gray-400 text-center">Nenhum item cadastrado ainda.</li>
                   )}
                   {itens.filter(i => i.categoriaId === categoriaSelecionada.id).map(i => (
-                    <li key={i.id} className="bg-gray-50 p-3 rounded border flex items-center justify-between gap-2">
+                    <li key={i.id} className="bg-gray-50 p-3 rounded border">
                       {editandoItemId === i.id ? (
-                        <>
+                        <div className="flex flex-col gap-2">
                           <input
                             type="text"
+                            placeholder="Nome do item"
                             value={editItem.nome}
                             onChange={e => setEditItem({ ...editItem, nome: e.target.value })}
                             className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm mb-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                           />
                           <input
                             type="text"
+                            placeholder="Descrição"
                             value={editItem.descricao}
                             onChange={e => setEditItem({ ...editItem, descricao: e.target.value })}
                             className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm mb-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                           />
                           <input
                             type="number"
+                            placeholder="Valor (R$)"
                             value={editItem.valor}
                             onChange={e => setEditItem({ ...editItem, valor: e.target.value })}
                             className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm mb-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                           />
-                          <button className="btn-adicionar" onClick={() => {
-                            setItens(itens.map(it => it.id === i.id ? { ...it, ...editItem } : it));
-                            setEditandoItemId(null);
-                            setEditItem({ nome: '', descricao: '', valor: '' });
-                          }}>Salvar</button>
-                          <button className="px-3 py-1 rounded bg-gray-200 text-gray-700" onClick={() => setEditandoItemId(null)}>Cancelar</button>
-                        </>
+                          <div className="flex justify-between gap-2">
+                            <button className="flex-1 px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" onClick={() => salvarEdicaoItem(i.id)}>Salvar</button>
+                            <button className="flex-1 px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300" onClick={() => setEditandoItemId(null)}>Cancelar</button>
+                          </div>
+                        </div>
                       ) : (
-                        <>
-                          <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <div>
                             <div className="font-medium">{i.nome}</div>
                             <div className="text-xs text-gray-500">{i.descricao}</div>
                             <div className="text-green-700 font-semibold">R$ {i.preco ? Number(i.preco).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00'}</div>
                           </div>
                           <div className="flex gap-2">
-                            <button className="px-3 py-1 rounded bg-gray-200 text-gray-700" onClick={() => { setEditandoItemId(i.id); setEditItem({ nome: i.nome, descricao: i.descricao, valor: i.valor }); }}>Editar</button>
+                            <button className="px-3 py-1 rounded bg-gray-200 text-gray-700" onClick={() => iniciarEdicaoItem(i.id, i)}>Editar</button>
                             <button className="px-3 py-1 rounded bg-red-500 text-white" onClick={() => removerItem(i.id)}>Remover</button>
                           </div>
-                        </>
+                        </div>
                       )}
                     </li>
                   ))}
