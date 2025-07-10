@@ -8,7 +8,7 @@ export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [formData, setFormData] = useState({
-    nome: "",
+    email: "",
     senha: "",
   });
 
@@ -45,7 +45,7 @@ export default function Login() {
     setShowValidationErrors(true);
     const newErrors = {};
 
-    if (!formData.nome) newErrors.nome = "Nome é obrigatório.";
+    if (!formData.email) newErrors.email = "Email é obrigatório.";
     if (!formData.senha) newErrors.senha = "Senha é obrigatória.";
 
     if (Object.keys(newErrors).length > 0) {
@@ -72,7 +72,7 @@ export default function Login() {
         // Redirecionar para o painel admin
         navigate("/painel");
       } else {
-        setErrors({ geral: "Nome ou senha inválidos." });
+        setErrors({ geral: "Email ou senha inválidos." });
       }
     } catch (error) {
       console.error("Erro ao fazer login:", error);
@@ -89,7 +89,7 @@ export default function Login() {
           Login
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Entre com seu nome e senha para acessar sua conta
+          Entre com seu email e senha para acessar sua conta
         </p>
       </div>
 
@@ -100,22 +100,22 @@ export default function Login() {
               <div className="text-red-500 text-center text-sm mb-2">{errors.geral}</div>
             )}
             <div>
-              <label htmlFor="nome-login" className="block text-sm font-medium text-gray-700">
-                Nome
+              <label htmlFor="email-login" className="block text-sm font-medium text-gray-700">
+                Email
               </label>
               <div className="mt-1">
                 <input
-                  id="nome-login"
-                  name="nome"
-                  type="text"
-                  value={formData.nome}
+                  id="email-login"
+                  name="email"
+                  type="email"
+                  value={formData.email}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  placeholder="Digite seu nome"
+                  placeholder="Digite seu email"
                   onChange={handleChange}
-                  autoComplete="off"
+                  autoComplete="email"
                 />
-                {showValidationErrors && errors.nome && (
-                  <p className="text-sm text-red-500 mt-1">{errors.nome}</p>
+                {showValidationErrors && errors.email && (
+                  <p className="text-sm text-red-500 mt-1">{errors.email}</p>
                 )}
               </div>
             </div>
