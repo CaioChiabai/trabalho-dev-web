@@ -18,7 +18,7 @@ const getImageDataUrl = (base64String, defaultImage) => {
 };
 
 const PainelAdmin = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
   const [abaAtiva, setAbaAtiva] = useState("cardapios");
   const [cardapios, setCardapios] = useState([]);
@@ -70,9 +70,38 @@ const PainelAdmin = () => {
       console.log('Dados completos do usuário no PainelAdmin:', user); // Debug detalhado
       console.log('LogoUrl:', user.logoUrl);
       console.log('BannerUrl:', user.bannerUrl);
+      
+      // Se não temos dados completos do usuário (logo/banner), buscar do backend
+      if (!user.logoUrl && !user.bannerUrl && !user.cnpj) {
+        fetchUserCompleteData();
+      }
+      
       fetchCardapios();
     }
   }, [user]);
+
+  // Função para buscar dados completos do usuário
+  const fetchUserCompleteData = async () => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.usuarios}/${user.id}`);
+      if (response.ok) {
+        const userData = await response.json();
+        console.log('Dados completos do usuário buscados:', userData);
+        
+        // Atualizar contexto com dados completos
+        updateUser({
+          nome: userData.nome,
+          email: userData.email,
+          cnpj: userData.cnpj,
+          telefone: userData.telefone,
+          logoUrl: userData.logoUrl,
+          bannerUrl: userData.bannerUrl
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao buscar dados completos do usuário:', error);
+    }
+  };
 
   // Função para buscar cardápios do backend
   const fetchCardapios = async () => {
@@ -517,17 +546,17 @@ const PainelAdmin = () => {
       const formData = new FormData();
       
       // Adicionar dados do usuário
-      formData.append('nome', editUsuario.nome);
-      formData.append('email', editUsuario.email);
-      formData.append('cnpj', editUsuario.cnpj);
-      formData.append('telefone', editUsuario.telefone);
+      formData.append('Nome', editUsuario.nome);
+      formData.append('Email', editUsuario.email);
+      formData.append('Cnpj', editUsuario.cnpj);
+      formData.append('Telefone', editUsuario.telefone);
       
       // Adicionar arquivos se selecionados
       if (editUsuario.logoFile) {
-        formData.append('logoFile', editUsuario.logoFile);
+        formData.append('Logo', editUsuario.logoFile);
       }
       if (editUsuario.bannerFile) {
-        formData.append('bannerFile', editUsuario.bannerFile);
+        formData.append('Banner', editUsuario.bannerFile);
       }
 
       console.log('Atualizando usuário ID:', user.id);
@@ -545,14 +574,19 @@ const PainelAdmin = () => {
       const updatedUser = await response.json();
       console.log('Usuário atualizado:', updatedUser);
       
-      // Atualizar contexto de autenticação se necessário
-      // Você pode precisar implementar uma função updateUser no AuthContext
+      // Atualizar o contexto de autenticação com os novos dados
+      updateUser({
+        nome: updatedUser.nome,
+        email: updatedUser.email,
+        cnpj: updatedUser.cnpj,
+        telefone: updatedUser.telefone,
+        logoUrl: updatedUser.logoUrl,
+        bannerUrl: updatedUser.bannerUrl,
+        dataAtualizacao: updatedUser.dataAtualizacao
+      });
       
       fecharEditModal();
       alert('Informações atualizadas com sucesso!');
-      
-      // Recarregar a página para atualizar as informações do usuário
-      window.location.reload();
       
     } catch (error) {
       console.error('Erro ao atualizar usuário:', error);

@@ -144,8 +144,12 @@ namespace APICardapio.Services
             {
                 Id = usuario.Id,
                 Nome = usuario.Nome,
-                Token = token,
-                
+                Email = usuario.Email,
+                Cnpj = usuario.Cnpj,
+                Telefone = usuario.Telefone,
+                LogoUrl = usuario.Logo != null ? Convert.ToBase64String(usuario.Logo) : null,
+                BannerUrl = usuario.Banner != null ? Convert.ToBase64String(usuario.Banner) : null,
+                Token = token
             };
         }
     }
